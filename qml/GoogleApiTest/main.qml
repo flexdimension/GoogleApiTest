@@ -7,7 +7,7 @@ import "UI"
 import "Google.js" as Google
 
 Rectangle { id: main
-    width: 800
+    width: 400
     height: 600
 
     signal failedToRefresh
@@ -35,8 +35,8 @@ Rectangle { id: main
 
 
     Rectangle { id:taskViewFrame
-        x: parent.width / 2
-        width: parent.width / 2
+        x: 0
+        width: parent.width
         height: parent.height
         color: "#BBBBBB"
         clip: true

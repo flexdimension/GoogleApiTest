@@ -46,6 +46,17 @@ ListModel { id: taskModel
         );
     }
 
+    function removeTaskToDB(task) {
+        var db = openDatabaseSync("FlexNote", "0.1", "TaskList", 1000000);
+
+        db.transaction(
+                function(tx) {
+                    var removeState = 'Delete Tasks WHERE id="' + task["id"] + '"';
+                    tx.executeSql(removeState);
+                }
+        );
+    }
+
     function storeToDB() {
         var db = openDatabaseSync("FlexNote", "0.1", "TaskList", 1000000);
 
@@ -199,7 +210,7 @@ ListModel { id: taskModel
             previous = get(idx - 1)["id"];
 
         insert(idx,
-               {   "title": "new Task",
+               {   "title": "",
                    "id": "",
                    "updated": "",
                    "notes":"",
@@ -212,7 +223,17 @@ ListModel { id: taskModel
                 });
 
         Google.insertTask(taskListId, parent, previous, function(task) {taskInserted(task, idx)});
+    }
 
+    function removeTask(idx) {
+        var id = get(idx)["id"];
+        console.log("id" + idx );
+        remove(idx);
+        Google.removeTask(taskListId, id, taskRemoved);
+    }
+
+    function taskRemoved(task) {
+        storeToDB();
     }
 
     function taskInserted(task, idx) {

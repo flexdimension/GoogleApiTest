@@ -66,14 +66,35 @@ Rectangle { id: main
             y: topToolbar.height + taskView.height
             width: parent.width
             height: 50
-            Button {
-                height: 40
+            Row {
+                spacing: 10
                 anchors.centerIn : parent
-                text: "New"
+                Button {
+                    height: 40
+                    text: "Sync"
 
-                onClicked: {
-                    console.log("clicked");
-                    taskModel.insertTask(0);
+                    onClicked: {
+                        taskModel.pull();
+                    }
+                }
+                Button {
+                    height: 40
+                    text: "New"
+
+                    onClicked: {
+                        console.log("clicked");
+                        taskModel.insertTask(0);
+                        taskView.positionViewAtBeginning();
+                    }
+                }
+                Button {
+                    height: 40
+                    text: "Delete"
+
+                    onClicked: {
+                        console.log("Delete clicked. idx :", taskView.currentIndex);
+                        taskModel.removeTask(taskView.currentIndex);
+                    }
                 }
             }
         }

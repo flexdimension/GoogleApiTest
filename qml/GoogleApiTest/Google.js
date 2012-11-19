@@ -18,7 +18,7 @@ function setRefreshToken(newToken) {
                     tx.executeSql('DELETE From Token WHERE name = "GoogleTask"');
 
                     tx.executeSql('INSERT INTO Token VALUES(?, ?)', ['refreshToken', newToken]);
-                    console.log('refresh token is stored in DB');
+                    console.log('refresh token is stored in DB:' + newToken);
                 }
     );
     main.refreshToken = newToken;
@@ -110,7 +110,7 @@ function insertTask(TaskListId, parentId, previousId, func) {
     var paramToken = "access_token=" + main.accessToken;
     var paramOptions = "&parent=" + parentId + "&previous=" + previousId;
     var url = baseUrl + "/lists/" + taskListId + "/tasks" + "?" + paramToken + paramOptions;
-    var params = '{"title":"new Task"}';
+    var params = '{"title":""}';
     console.log("url:" + url);
     http.open("POST", url, true);
     http.setRequestHeader("Content-type", "application/json");
@@ -160,6 +160,23 @@ function modifyTask(taskListId, taskId, title, func) {
     console.log("update params: " + params);
 
     http.send(params);
+}
+
+function removeTask(taskListId, taskId, func) {
+    console.log("remove Task :" + taskId);
+    var http = new XMLHttpRequest();
+    var baseUrl = "https://www.googleapis.com/tasks/v1";
+    var paramToken = "access_token=" + main.accessToken;
+    var url = baseUrl + "/lists/" + taskListId + "/tasks/" + taskId + "?" + paramToken;
+    console.log("url:" + url);
+    http.open("DELETE", url, true);
+    http.onreadystatechange = function() {
+        if (http.readyState == XMLHttpRequest.DONE) {
+            func();
+        }
+    }
+
+    http.send();
 }
 
 function getTaskList(text) {

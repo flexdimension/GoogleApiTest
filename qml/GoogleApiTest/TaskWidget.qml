@@ -8,6 +8,14 @@ Rectangle { id: taskWidget
 
     state: "initial"
 
+
+    ListView.onRemove: SequentialAnimation {
+        PropertyAction { target: taskWidget; property: "ListView.delayRemove"; value: true }
+        NumberAnimation { target: taskWidget; property: "height"; to: 0; duration: 250; easing.type: Easing.InOutQuad }
+        PropertyAction { target: taskWidget; property: "ListView.delayRemove"; value: false }
+    }
+
+
     onStateChanged: {
         console.log("taskWidget state:" + state);
     }
@@ -25,6 +33,9 @@ Rectangle { id: taskWidget
         },
         State{
             name: "initial"
+        },
+        State{
+            name: "removing"
         }
 
     ]
@@ -55,7 +66,7 @@ Rectangle { id: taskWidget
             y: 10
             width: 20
             height: parent.height - 20
-            text: model.index
+            text: model.index == -1 ? "" : model.index
         }
 
         TextInput { id: textTitle
@@ -68,7 +79,7 @@ Rectangle { id: taskWidget
 
             Text { id: noTitle
                 text: "No Title"
-                color: "gray"
+                color: "#CCCCAA"
                 visible: textTitle.text == ""
 
                 Rectangle {
@@ -87,6 +98,21 @@ Rectangle { id: taskWidget
                 pop();
             }
 
+            Keys.onPressed: {
+                console.log("Key pressed :" + event.key);
+                if(event.key == Qt.Key_Backspace && text.length == 0 && model.index != 0) {
+                    taskWidget.removeTask();
+                }
+                else if(event.key == Qt.Key_Tab) {
+                    console.log("Tab pressed");
+                    taskWidget.increaseIndent();
+                }
+                else if(event.key == Qt.Key_Backtab) {
+                    console.log("^Tab pressed");
+                    taskWidget.decreaseIndent();
+                }
+            }
+
             Keys.onReturnPressed: {
                 console.log("enter pressed");
                 if(cursorPosition == 0) {
@@ -99,7 +125,7 @@ Rectangle { id: taskWidget
                     taskWidget.activateNext();
                 }
                 else {
-                    taskWidget.modifyTask();
+                    taskWidget.modifyTitle();
                 }
             }
 
@@ -108,7 +134,7 @@ Rectangle { id: taskWidget
                 taskWidget.onActivated(focus);
                 if(focus == false) {
                     if(originalText != text) {
-                        taskWidget.modifyTask();
+                        taskWidget.modifyTitle();
                     }
                 }
 
@@ -127,17 +153,24 @@ Rectangle { id: taskWidget
         if(focus == true) {
             ListView.view.currentIndex = model.index;
             textTitle.focus = true;
-            pop();
         }
     }
 
-    function activateHead() {
+    function setCursorToHead() {
         textTitle.focus = true;
         textTitle.cursorPosition = 0;
     }
 
-    function modifyTask() {
-        ListView.view.model.modifyTask(model.index, textTitle.text);
+    function setCursorToTail() {
+        textTitle.focus = true;
+        textTitle.cursorPosition = textTitle.text.length;
+    }
+
+    function modifyTitle() {
+        console.log("TaskWidget.modifyTask : " + model.index);
+        if(model.index == -1)
+            return;
+        ListView.view.model.modifyTitle(model.index, textTitle.text);
     }
 
     function insertTask(idx) {
@@ -145,19 +178,40 @@ Rectangle { id: taskWidget
     }
 
     function removeTask() {
+        state = "removing";
+        var idx = model.index;
         ListView.view.model.removeTask(model.index);
+        taskWidget.activatePrevious(idx);
     }
 
     function activateNext() {
-
         console.log("current : " +  ListView.view.currentIndex);
         ListView.view.currentIndex = model.index + 1;
-        ListView.view.currentItem.activateHead();
+        ListView.view.currentItem.setCursorToHead();
         console.log("current : " +  ListView.view.currentIndex);
+    }
 
+    function activatePrevious(idx) {
+        console.log("current : " +  idx);
+        ListView.view.currentIndex = idx - 1;
+        console.log("current : " +  idx);
+        ListView.view.currentItem.setCursorToTail();
     }
 
     function pop(delay) {
         state = "poping";
+    }
+
+    function increaseIndent() {
+        if(model.index != 0 && ListView.view.model.get(model.index -1).indent + 1 != model.indent) {
+            ListView.view.model.increaseIndent(model.index);
+        }
+    }
+
+    function decreaseIndent() {
+        if(model.index != 0 && model.indent >= 1) {
+            console.log("decrease indent");
+            ListView.view.model.decreaseIndent(model.index);
+        }
     }
 }

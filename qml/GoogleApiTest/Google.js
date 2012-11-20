@@ -132,8 +132,10 @@ function insertTask(TaskListId, parentId, previousId, func) {
     http.send(params);
 }
 
-function modifyTask(taskListId, taskId, title, func) {
-    console.log("modify Task :" + title);
+function modifyTask(taskListId, task, func) {
+    var taskId = task["id"];
+
+    console.log("modify Task :" + task["title"]);
     var http = new XMLHttpRequest();
     var baseUrl = "https://www.googleapis.com/tasks/v1";
     var paramToken = "access_token=" + main.accessToken;
@@ -155,11 +157,44 @@ function modifyTask(taskListId, taskId, title, func) {
         }
     }
 
-    var params = '{"id":' + '"' + taskId + '"' + ',"title":"' + title + '"}';
+    var params = '{"id":' + '"' + taskId + '"' +
+                    ',"title":"' + task["title"] + '"' +
+                    ',"notes":"' + task["notes"] + '"' +
+                    '}';
 
     console.log("update params: " + params);
 
     http.send(params);
+}
+
+function moveTask(taskListId, task, func) {
+    var taskId = task["id"];
+    var parentId = task["parent"];
+    var previousId = task["previous"];
+
+    console.log("move Task");
+    var http = new XMLHttpRequest();
+    var baseUrl = "https://www.googleapis.com/tasks/v1";
+    var paramToken = "access_token=" + main.accessToken;
+    var paramOptions = "&parent=" + parentId + "&previous=" + previousId;
+    var url = baseUrl + "/lists/" + taskListId + "/tasks/" + taskId + "/move" + "?" + paramToken + paramOptions;
+    console.log("url:" + url);
+    http.open("POST", url, true);
+    http.onreadystatechange = function() {
+        if (http.readyState == XMLHttpRequest.DONE) {
+            var rs = http.responseText;
+            console.log("Tasks:" + rs);
+            eval("var task = " + rs);
+            console.log(task["title"]);
+
+            func(task);
+
+        }else{
+            print("task failed to connect :" + http.readyState);
+        }
+    }
+
+    http.send();
 }
 
 function removeTask(taskListId, taskId, func) {
